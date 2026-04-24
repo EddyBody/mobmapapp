@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Kart App Stabil</title>
+    <title>Kart App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -44,6 +44,7 @@ window.onload = function() {
     }).addTo(map);
 
     let userMarker = null;
+    let markers = {};   // 🔥 lagrer alle markers
 
     // GPS
     document.getElementById("locBtn").addEventListener("click", function() {
@@ -62,16 +63,30 @@ window.onload = function() {
         });
     });
 
-    // Klikk på kart = legg til marker
+    // Klikk på kart
     map.on('click', function(e) {
+
+        const id = Date.now();  // unik ID
+
         const marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
 
-       marker.bindPopup(
-    "<b>Punkt registrert</b><br>" +
-    "Lat: " + e.latlng.lat.toFixed(5) + "<br>" +
-    "Lon: " + e.latlng.lng.toFixed(5)
-);
+        markers[id] = marker;
+
+        marker.bindPopup(`
+            <b>Punkt registrert</b><br>
+            Lat: ${e.latlng.lat.toFixed(5)}<br>
+            Lon: ${e.latlng.lng.toFixed(5)}<br><br>
+            <button onclick="deleteMarker(${id})">Slett</button>
+        `).openPopup();
     });
+
+    // 🔥 global funksjon (må være global for onclick)
+    window.deleteMarker = function(id) {
+        if (markers[id]) {
+            map.removeLayer(markers[id]);
+            delete markers[id];
+        }
+    };
 
 };
 </script>
