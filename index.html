@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kart App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <style>
+        body { margin: 0; }
+        #map { height: 100vh; width: 100%; }
+       button {
+   		 position: absolute;
+   		 top: 100px;   /* flyttet ned */
+    		 left: 10px;
+    		 z-index: 1000;
+    		 padding: 10px;
+		}
+    </style>
+</head>
+<body>
+
+<button onclick="getLocation()">Finn meg</button>
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+    // Startkart (default posisjon)
+    var map = L.map('map').setView([58.97, 5.73], 13); // Stavanger-ish
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    var marker;
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition);
+        } else {
+            alert("GPS støttes ikke");
+        }
+    }
+
+    function showPosition(position) {
+        var lat = position.coords.latitude;
+        var lon = position.coords.longitude;
+
+        // Fjern gammel marker
+        if (marker) {
+            map.removeLayer(marker);
+        }
+
+        marker = L.marker([lat, lon]).addTo(map)
+            .bindPopup("Du er her!")
+            .openPopup();
+
+        map.setView([lat, lon], 16);
+    }
+</script>
+
+</body>
+</html>
