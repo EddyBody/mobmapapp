@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Kart App v3</title>
+    <title>Kart App V4</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
     <style>
@@ -30,17 +29,18 @@
 </head>
 <body>
 
-<button id="locBtn" class="btn" onclick="getLocation()">Finn meg</button>
-
-<!-- DIREKTE INPUT (viktig!) -->
+<button id="locBtn" class="btn">Finn meg</button>
 <input type="file" accept="image/*" id="cameraInput" class="btn" />
 
 <div id="map"></div>
 
-<!-- Leaflet -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
+window.onload = function() {
+
+    alert("JS LASTET");  // <-- VIKTIG TEST
+
     var map = L.map('map').setView([58.97, 5.73], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -50,7 +50,7 @@
     var currentPosition = null;
     var userMarker = null;
 
-    function getLocation() {
+    document.getElementById("locBtn").addEventListener("click", function() {
         navigator.geolocation.getCurrentPosition(
             function(pos) {
                 var lat = pos.coords.latitude;
@@ -68,15 +68,14 @@
             },
             function(err) {
                 alert("GPS feil: " + err.message);
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000
             }
         );
-    }
+    });
 
-    document.getElementById('cameraInput').addEventListener('change', function(event) {
+    document.getElementById("cameraInput").addEventListener("change", function(event) {
+
+        alert("EVENT TRIGGET");  // <-- TEST
+
         const file = event.target.files[0];
 
         if (!file) return;
@@ -100,124 +99,12 @@
                 <b>Bilde tatt her</b><br>
                 <img src="${imageUrl}" width="200">
             `).openPopup();
-
-            map.setView([lat, lon], 16);
         };
 
         reader.readAsDataURL(file);
     });
-</script>
 
-</body>
-</html><!DOCTYPE html>
-<html>
-<head>
-    <title>Kart App</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-
-    <style>
-        body { margin: 0; }
-
-        #map {
-            height: 100vh;
-            width: 100%;
-        }
-
-        .btn {
-            position: absolute;
-            left: 10px;
-            z-index: 1000;
-            padding: 10px;
-            background: white;
-            border: 1px solid #ccc;
-        }
-
-        #locBtn { top: 100px; }
-        #cameraInput { top: 160px; }
-    </style>
-</head>
-<body>
-
-<button id="locBtn" class="btn" onclick="getLocation()">Finn meg</button>
-
-<!-- DIREKTE INPUT (viktig!) -->
-<input type="file" accept="image/*" id="cameraInput" class="btn" />
-
-<div id="map"></div>
-
-<!-- Leaflet -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-<script>
-    var map = L.map('map').setView([58.97, 5.73], 13);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    var currentPosition = null;
-    var userMarker = null;
-
-    function getLocation() {
-        navigator.geolocation.getCurrentPosition(
-            function(pos) {
-                var lat = pos.coords.latitude;
-                var lon = pos.coords.longitude;
-
-                currentPosition = { latitude: lat, longitude: lon };
-
-                if (userMarker) map.removeLayer(userMarker);
-
-                userMarker = L.marker([lat, lon]).addTo(map)
-                    .bindPopup("Du er her!")
-                    .openPopup();
-
-                map.setView([lat, lon], 16);
-            },
-            function(err) {
-                alert("GPS feil: " + err.message);
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000
-            }
-        );
-    }
-
-    document.getElementById('cameraInput').addEventListener('change', function(event) {
-    alert("EVENT TRIGGET"); 
-        const file = event.target.files[0];
-
-        if (!file) return;
-
-        if (!currentPosition) {
-            alert("Trykk 'Finn meg' først!");
-            return;
-        }
-
-        const reader = new FileReader();
-
-        reader.onload = function(e) {
-            const imageUrl = e.target.result;
-
-            const lat = currentPosition.latitude;
-            const lon = currentPosition.longitude;
-
-            const marker = L.marker([lat, lon]).addTo(map);
-
-            marker.bindPopup(`
-                <b>Bilde tatt her</b><br>
-                <img src="${imageUrl}" width="200">
-            `).openPopup();
-
-            map.setView([lat, lon], 16);
-        };
-
-        reader.readAsDataURL(file);
-    });
+};
 </script>
 
 </body>
