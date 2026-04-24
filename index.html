@@ -22,44 +22,67 @@
 <body>
 
 <button onclick="getLocation()">Finn meg</button>
+<button onclick="takePhoto()" style="top: 140px;">Ta bilde</button>
+
 <div id="map"></div>
 
-<!-- Leaflet JS -->
+<input type="file" accept="image/*" capture="environment" id="cameraInput" style="display:none" />
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
-    // Startkart (default posisjon)
-    var map = L.map('map').setView([58.97, 5.73], 13); // Stavanger-ish
+    var map = L.map('map').setView([58.97, 5.73], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
     var marker;
+    var currentPosition = null;
 
     function getLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(showPosition);
-        } else {
-            alert("GPS støttes ikke");
-        }
+        navigator.geolocation.getCurrentPosition(function(pos) {
+            currentPosition = pos.coords;
+
+            if (marker) map.removeLayer(marker);
+
+            marker = L.marker([pos.coords.latitude, pos.coords.longitude]).addTo(map)
+                .bindPopup("Du er her!")
+                .openPopup();
+
+            map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+        });
     }
 
-    function showPosition(position) {
-        var lat = position.coords.latitude;
-        var lon = position.coords.longitude;
+    function takePhoto() {
+        document.getElementById('cameraInput').click();
+    }
 
-        // Fjern gammel marker
-        if (marker) {
-            map.removeLayer(marker);
+    document.getElementById('cameraInput').addEventListener('change', function(event) {
+        var file = event.target.files[0];
+        if (!file || !currentPosition) {
+            alert("Du må finne posisjon først!");
+            return;
         }
 
-        marker = L.marker([lat, lon]).addTo(map)
-            .bindPopup("Du er her!")
-            .openPopup();
+        var reader = new FileReader();
 
-        map.setView([lat, lon], 16);
-    }
+        reader.onload = function(e) {
+            var imageUrl = e.target.result;
+
+            var lat = currentPosition.latitude;
+            var lon = currentPosition.longitude;
+
+            var imgMarker = L.marker([lat, lon]).addTo(map);
+
+            imgMarker.bindPopup(`
+                <b>Bilde tatt her</b><br>
+                <img src="${imageUrl}" width="150">
+            `);
+        };
+
+        reader.readAsDataURL(file);
+    });
 </script>
 
 </body>
