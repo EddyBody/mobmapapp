@@ -37,33 +37,56 @@
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    var marker;
     var currentPosition = null;
+    var userMarker = null;
 
     function getLocation() {
-        navigator.geolocation.getCurrentPosition(function(pos) {
-            currentPosition = pos.coords;
+        if (!navigator.geolocation) {
+            alert("GPS støttes ikke");
+            return;
+        }
 
-            if (marker) map.removeLayer(marker);
+        navigator.geolocation.getCurrentPosition(
+            function(pos) {
+                var lat = pos.coords.latitude;
+                var lon = pos.coords.longitude;
 
-            marker = L.marker([pos.coords.latitude, pos.coords.longitude]).addTo(map)
-                .bindPopup("Du er her!")
-                .openPopup();
+                currentPosition = { latitude: lat, longitude: lon };
 
-            map.setView([pos.coords.latitude, pos.coords.longitude], 16);
-        });
+                if (userMarker) {
+                    map.removeLayer(userMarker);
+                }
+
+                userMarker = L.marker([lat, lon]).addTo(map)
+                    .bindPopup("Du er her!")
+                    .openPopup();
+
+                map.setView([lat, lon], 16);
+            },
+            function(error) {
+                alert("GPS-feil: " + error.message);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000
+            }
+        );
     }
 
     function takePhoto() {
+        if (!currentPosition) {
+            alert("Trykk 'Finn meg' først!");
+            return;
+        }
+
+        document.getElementById('cameraInput').value = ""; // reset
         document.getElementById('cameraInput').click();
     }
 
     document.getElementById('cameraInput').addEventListener('change', function(event) {
         var file = event.target.files[0];
-        if (!file || !currentPosition) {
-            alert("Du må finne posisjon først!");
-            return;
-        }
+
+        if (!file) return;
 
         var reader = new FileReader();
 
@@ -73,12 +96,12 @@
             var lat = currentPosition.latitude;
             var lon = currentPosition.longitude;
 
-            var imgMarker = L.marker([lat, lon]).addTo(map);
+            var marker = L.marker([lat, lon]).addTo(map);
 
-            imgMarker.bindPopup(`
+            marker.bindPopup(`
                 <b>Bilde tatt her</b><br>
                 <img src="${imageUrl}" width="150">
-            `);
+            `).openPopup();
         };
 
         reader.readAsDataURL(file);
