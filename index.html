@@ -9,25 +9,34 @@
 
     <style>
         body { margin: 0; }
-        #map { height: 100vh; width: 100%; }
-       button {
-   		 position: absolute;
-   		 top: 100px;   /* flyttet ned */
-    		 left: 10px;
-    		 z-index: 1000;
-    		 padding: 10px;
-		}
+
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+
+        button {
+            position: absolute;
+            left: 10px;
+            z-index: 1000;
+            padding: 10px;
+        }
+
+        #locBtn { top: 100px; }
+        #photoBtn { top: 160px; }
     </style>
 </head>
 <body>
 
-<button onclick="getLocation()">Finn meg</button>
-<button onclick="takePhoto()" style="top: 140px;">Ta bilde</button>
+<button id="locBtn" onclick="getLocation()">Finn meg</button>
+<button id="photoBtn" onclick="takePhoto()">Ta bilde</button>
 
 <div id="map"></div>
 
-<input type="file" accept="image/*" capture="environment" id="cameraInput" style="display:none" />
+<!-- VIKTIG: ingen capture -->
+<input type="file" accept="image/*" id="cameraInput" style="display:none" />
 
+<!-- Leaflet -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
@@ -41,11 +50,6 @@
     var userMarker = null;
 
     function getLocation() {
-        if (!navigator.geolocation) {
-            alert("GPS støttes ikke");
-            return;
-        }
-
         navigator.geolocation.getCurrentPosition(
             function(pos) {
                 var lat = pos.coords.latitude;
@@ -53,9 +57,7 @@
 
                 currentPosition = { latitude: lat, longitude: lon };
 
-                if (userMarker) {
-                    map.removeLayer(userMarker);
-                }
+                if (userMarker) map.removeLayer(userMarker);
 
                 userMarker = L.marker([lat, lon]).addTo(map)
                     .bindPopup("Du er her!")
@@ -63,8 +65,8 @@
 
                 map.setView([lat, lon], 16);
             },
-            function(error) {
-                alert("GPS-feil: " + error.message);
+            function(err) {
+                alert("GPS feil: " + err.message);
             },
             {
                 enableHighAccuracy: true,
@@ -79,30 +81,50 @@
             return;
         }
 
-        document.getElementById('cameraInput').value = ""; // reset
-        document.getElementById('cameraInput').click();
+        const input = document.getElementById('cameraInput');
+
+        // reset viktig!
+        input.value = "";
+
+        // liten delay (fikser mobil bug)
+        setTimeout(() => {
+            input.click();
+        }, 100);
     }
 
     document.getElementById('cameraInput').addEventListener('change', function(event) {
-    alert("Bilde valgt!");
-        var file = event.target.files[0];
+        const file = event.target.files[0];
 
-        if (!file) return;
+        if (!file) {
+            alert("Ingen fil valgt");
+            return;
+        }
 
-        var reader = new FileReader();
+        if (!currentPosition) {
+            alert("Ingen posisjon!");
+            return;
+        }
+
+        const reader = new FileReader();
 
         reader.onload = function(e) {
-            var imageUrl = e.target.result;
+            const imageUrl = e.target.result;
 
-            var lat = currentPosition.latitude;
-            var lon = currentPosition.longitude;
+            const lat = currentPosition.latitude;
+            const lon = currentPosition.longitude;
 
-            var marker = L.marker([lat, lon]).addTo(map);
+            const marker = L.marker([lat, lon]).addTo(map);
 
             marker.bindPopup(`
                 <b>Bilde tatt her</b><br>
-                <img src="${imageUrl}" width="150">
+                <img src="${imageUrl}" width="200">
             `).openPopup();
+
+            map.setView([lat, lon], 16);
+        };
+
+        reader.onerror = function() {
+            alert("Feil ved lesing av bilde");
         };
 
         reader.readAsDataURL(file);
