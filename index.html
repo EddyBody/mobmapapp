@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Kart App V4</title>
+    <title>Kart App V5</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
     <style>
@@ -21,6 +22,7 @@
             padding: 10px;
             background: white;
             border: 1px solid #ccc;
+            border-radius: 5px;
         }
 
         #locBtn { top: 100px; }
@@ -30,6 +32,8 @@
 <body>
 
 <button id="locBtn" class="btn">Finn meg</button>
+
+<!-- VIKTIG: direkte input -->
 <input type="file" accept="image/*" id="cameraInput" class="btn" />
 
 <div id="map"></div>
@@ -39,45 +43,47 @@
 <script>
 window.onload = function() {
 
-    alert("JS LASTET");  // <-- VIKTIG TEST
-
-    var map = L.map('map').setView([58.97, 5.73], 13);
+    const map = L.map('map').setView([58.97, 5.73], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    var currentPosition = null;
-    var userMarker = null;
+    let currentPosition = null;
+    let userMarker = null;
 
+    // 📍 GPS
     document.getElementById("locBtn").addEventListener("click", function() {
         navigator.geolocation.getCurrentPosition(
             function(pos) {
-                var lat = pos.coords.latitude;
-                var lon = pos.coords.longitude;
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
 
                 currentPosition = { latitude: lat, longitude: lon };
 
                 if (userMarker) map.removeLayer(userMarker);
 
                 userMarker = L.marker([lat, lon]).addTo(map)
-                    .bindPopup("Du er her!")
-                    .openPopup();
+                    .bindPopup("Du er her!");
 
                 map.setView([lat, lon], 16);
+
+                setTimeout(() => userMarker.openPopup(), 200);
             },
             function(err) {
                 alert("GPS feil: " + err.message);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000
             }
         );
     });
 
+    // 📷 Kamera / bilde
     document.getElementById("cameraInput").addEventListener("change", function(event) {
 
-        alert("EVENT TRIGGET");  // <-- TEST
-
         const file = event.target.files[0];
-
         if (!file) return;
 
         if (!currentPosition) {
@@ -93,12 +99,28 @@ window.onload = function() {
             const lat = currentPosition.latitude;
             const lon = currentPosition.longitude;
 
-            const marker = L.marker([lat, lon]).addTo(map);
+            // 🧠 stabilisering
+            setTimeout(() => {
 
-            marker.bindPopup(`
-                <b>Bilde tatt her</b><br>
-                <img src="${imageUrl}" width="200">
-            `).openPopup();
+                const marker = L.marker([lat, lon]).addTo(map);
+
+                marker.bindPopup(
+                    "<b>Bilde tatt her</b><br><img src='" + imageUrl + "' width='150'>"
+                );
+
+                map.setView([lat, lon], 16);
+
+                map.invalidateSize();
+
+                setTimeout(() => {
+                    marker.openPopup();
+                }, 200);
+
+            }, 200);
+        };
+
+        reader.onerror = function() {
+            alert("Feil ved lesing av bilde");
         };
 
         reader.readAsDataURL(file);
