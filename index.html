@@ -1,7 +1,9 @@
+👉 Erstatt hele index.html med dette:
+
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Kart App V5</title>
+    <title>Kart App V5 FIX</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Leaflet -->
@@ -22,18 +24,22 @@
             padding: 10px;
             background: white;
             border: 1px solid #ccc;
-            border-radius: 5px;
+            border-radius: 6px;
         }
 
         #locBtn { top: 100px; }
-        #cameraInput { top: 160px; }
+
+        /* Viktig: synlig fil-input (mobil stabilitet) */
+        #cameraInput {
+            top: 160px;
+        }
     </style>
 </head>
 <body>
 
 <button id="locBtn" class="btn">Finn meg</button>
 
-<!-- VIKTIG: direkte input -->
+<!-- Kamera / bilde (må være synlig for mobil stabilitet) -->
 <input type="file" accept="image/*" id="cameraInput" class="btn" />
 
 <div id="map"></div>
@@ -54,14 +60,18 @@ window.onload = function() {
 
     // 📍 GPS
     document.getElementById("locBtn").addEventListener("click", function() {
+
         navigator.geolocation.getCurrentPosition(
             function(pos) {
+
                 const lat = pos.coords.latitude;
                 const lon = pos.coords.longitude;
 
                 currentPosition = { latitude: lat, longitude: lon };
 
-                if (userMarker) map.removeLayer(userMarker);
+                if (userMarker) {
+                    map.removeLayer(userMarker);
+                }
 
                 userMarker = L.marker([lat, lon]).addTo(map)
                     .bindPopup("Du er her!");
@@ -80,50 +90,53 @@ window.onload = function() {
         );
     });
 
-    // 📷 Kamera / bilde
+    // 📷 Kamera / bilde (FIXED stabil versjon)
     document.getElementById("cameraInput").addEventListener("change", function(event) {
 
-        const file = event.target.files[0];
-        if (!file) return;
+        const file = event.target.files && event.target.files[0];
+
+        if (!file) {
+            alert("Ingen fil valgt");
+            return;
+        }
 
         if (!currentPosition) {
             alert("Trykk 'Finn meg' først!");
             return;
         }
 
-        const reader = new FileReader();
+        // 🔥 viktig for mobilkamera stabilitet
+        setTimeout(() => {
 
-        reader.onload = function(e) {
-            const imageUrl = e.target.result;
+            const reader = new FileReader();
 
-            const lat = currentPosition.latitude;
-            const lon = currentPosition.longitude;
+            reader.onload = function(e) {
 
-            // 🧠 stabilisering
-            setTimeout(() => {
+                const imageUrl = e.target.result;
+
+                const lat = currentPosition.latitude;
+                const lon = currentPosition.longitude;
 
                 const marker = L.marker([lat, lon]).addTo(map);
 
                 marker.bindPopup(
-                    "<b>Bilde tatt her</b><br><img src='" + imageUrl + "' width='150'>"
+                    "<b>Bilde tatt her</b><br><img src='" + imageUrl + "' width='180'>"
                 );
 
                 map.setView([lat, lon], 16);
 
-                map.invalidateSize();
-
                 setTimeout(() => {
                     marker.openPopup();
-                }, 200);
+                }, 150);
+            };
 
-            }, 200);
-        };
+            reader.onerror = function() {
+                alert("Kunne ikke lese bilde");
+            };
 
-        reader.onerror = function() {
-            alert("Feil ved lesing av bilde");
-        };
+            reader.readAsDataURL(file);
 
-        reader.readAsDataURL(file);
+        }, 300);
     });
 
 };
